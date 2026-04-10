@@ -99,7 +99,7 @@ export default function Emergencias() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="col-span-1 lg:col-span-3 relative">
           <div className="relative cursor-crosshair rounded-xl border border-border overflow-hidden" onClick={handleMapClick}>
-            <img src="/images/rensselaer-map.png" alt="Mapa de Rensselaer County" className="w-full h-auto" />
+            <img src="/images/liberty-county-map.webp" alt="Mapa de Liberty County" className="w-full h-auto" />
             {clickedPos && (
               <div className="absolute w-6 h-6 -ml-3 -mt-3 pointer-events-none" style={{ left: `${clickedPos.x}%`, top: `${clickedPos.y}%` }}>
                 <MapPin className="h-6 w-6 text-destructive drop-shadow-lg" />
