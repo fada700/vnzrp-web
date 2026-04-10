@@ -412,6 +412,7 @@ export type Database = {
           nombre: string
           owner_citizen_id: string | null
           precio: number
+          tipo: string | null
           updated_at: string
         }
         Insert: {
@@ -424,6 +425,7 @@ export type Database = {
           nombre: string
           owner_citizen_id?: string | null
           precio: number
+          tipo?: string | null
           updated_at?: string
         }
         Update: {
@@ -436,6 +438,7 @@ export type Database = {
           nombre?: string
           owner_citizen_id?: string | null
           precio?: number
+          tipo?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -675,6 +678,7 @@ export type Database = {
           id: string
           prioridad: string
           razon: string
+          recompensa: number | null
         }
         Insert: {
           activo?: boolean
@@ -683,6 +687,7 @@ export type Database = {
           id?: string
           prioridad?: string
           razon: string
+          recompensa?: number | null
         }
         Update: {
           activo?: boolean
@@ -691,6 +696,7 @@ export type Database = {
           id?: string
           prioridad?: string
           razon?: string
+          recompensa?: number | null
         }
         Relationships: [
           {
