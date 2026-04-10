@@ -448,6 +448,54 @@ export type Database = {
           },
         ]
       }
+      purchases: {
+        Row: {
+          categoria: string
+          citizen_id: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          nombre: string
+          precio_pagado: number
+          store_item_id: string | null
+        }
+        Insert: {
+          categoria?: string
+          citizen_id: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          nombre: string
+          precio_pagado?: number
+          store_item_id?: string | null
+        }
+        Update: {
+          categoria?: string
+          citizen_id?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          nombre?: string
+          precio_pagado?: number
+          store_item_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchases_citizen_id_fkey"
+            columns: ["citizen_id"]
+            isOneToOne: false
+            referencedRelation: "citizens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchases_store_item_id_fkey"
+            columns: ["store_item_id"]
+            isOneToOne: false
+            referencedRelation: "store_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_items: {
         Row: {
           activo: boolean
@@ -461,6 +509,7 @@ export type Database = {
           nombre: string
           precio: number
           stock: number
+          subcategoria: string | null
           updated_at: string
         }
         Insert: {
@@ -475,6 +524,7 @@ export type Database = {
           nombre: string
           precio: number
           stock?: number
+          subcategoria?: string | null
           updated_at?: string
         }
         Update: {
@@ -489,6 +539,7 @@ export type Database = {
           nombre?: string
           precio?: number
           stock?: number
+          subcategoria?: string | null
           updated_at?: string
         }
         Relationships: []
