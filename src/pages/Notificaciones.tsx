@@ -1,0 +1,119 @@
+import { motion } from "framer-motion";
+import { Bell, Check, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { useNotifications } from "@/hooks/useData";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+
+const tabs = ["Todas", "No leídas", "Leídas"];
+
+export default function Notificaciones() {
+  const { data: notifications, isLoading } = useNotifications();
+  const [activeTab, setActiveTab] = useState("Todas");
+  const queryClient = useQueryClient();
+
+  const filtered = (notifications || []).filter(n => {
+    if (activeTab === "No leídas") return !n.leida;
+    if (activeTab === "Leídas") return n.leida;
+    return true;
+  });
+
+  const unread = notifications?.filter(n => !n.leida).length ?? 0;
+
+  const markAllRead = async () => {
+    if (!notifications) return;
+    const unreadIds = notifications.filter(n => !n.leida).map(n => n.id);
+    if (unreadIds.length === 0) return;
+    for (const id of unreadIds) {
+      await supabase.from("notifications").update({ leida: true }).eq("id", id);
+    }
+    queryClient.invalidateQueries({ queryKey: ["notifications"] });
+  };
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+            <Bell className="h-6 w-6 text-primary" /> Notificaciones
+          </h1>
+          <p className="text-sm text-muted-foreground">{unread} sin leer · {notifications?.length ?? 0} total</p>
+        </div>
+        {unread > 0 && (
+          <button onClick={markAllRead} className="text-xs font-medium text-primary hover:underline flex items-center gap-1">
+            <Check className="h-3 w-3" /> Marcar todas leídas
+          </button>
+        )}
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: "Total", value: notifications?.length ?? 0, color: "text-primary" },
+          { label: "Sin leer", value: unread, color: "text-destructive" },
+          { label: "Leídas", value: (notifications?.length ?? 0) - unread, color: "text-accent" },
+        ].map(s => (
+          <div key={s.label} className="rounded-xl border border-border bg-card p-4 text-center">
+            <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+            <p className="text-xs text-muted-foreground">{s.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-2 flex-wrap">
+        {tabs.map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
+              activeTab === tab
+                ? "bg-primary text-primary-foreground"
+                : "border border-border text-muted-foreground hover:bg-surface-3 hover:text-foreground"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {/* List */}
+      {filtered.length === 0 ? (
+        <div className="text-center py-16">
+          <Bell className="mx-auto h-12 w-12 text-muted-foreground/30 mb-4" />
+          <h2 className="text-lg font-semibold text-foreground">Sin notificaciones</h2>
+          <p className="text-sm text-muted-foreground mt-1">No tienes notificaciones por ahora</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((notif, i) => (
+            <motion.div
+              key={notif.id}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className={`flex items-start gap-4 rounded-xl border bg-card p-4 ${
+                notif.leida ? "border-border" : "border-primary/30 bg-primary/5"
+              }`}
+            >
+              <div className="rounded-lg bg-surface-3 p-2 text-primary">
+                <Bell className="h-5 w-5" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-foreground">{notif.titulo}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{notif.mensaje}</p>
+              </div>
+              <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                {new Date(notif.created_at).toLocaleDateString("es-CL")}
+              </span>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
