@@ -1,0 +1,51 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  try {
+    const { placa, password } = await req.json();
+    if (!placa || !password) {
+      return new Response(JSON.stringify({ error: "Placa y contraseña requeridos" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    const { data: officer, error: fetchErr } = await supabase
+      .from("officers")
+      .select("*, citizens(*)")
+      .eq("placa", placa.trim().toUpperCase())
+      .maybeSingle();
+
+    if (fetchErr) throw fetchErr;
+    if (!officer) {
+      return new Response(JSON.stringify({ error: "Placa no encontrada" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (officer.contrasena_hash !== password) {
+      return new Response(JSON.stringify({ error: "Credenciales incorrectas" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    const session = {
+      id: officer.id,
+      placa: officer.placa,
+      rango: officer.rango,
+      departamento: officer.departamento,
+      citizen_id: officer.citizen_id,
+      nombre: (officer.citizens?.nombre || "") + " " + (officer.citizens?.apellido_paterno || ""),
+      roblox_nickname: officer.citizens?.roblox_nickname,
+    };
+
+    return new Response(JSON.stringify({ officer: session }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  } catch (e) {
+    return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+  }
+});
