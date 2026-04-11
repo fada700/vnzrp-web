@@ -2,23 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Shield, Loader2, AlertCircle } from "lucide-react";
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-const hqSupabase = createClient<Database>(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-  {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-      detectSessionInUrl: false,
-      storageKey: "hq-login-anon",
-    },
-  },
-);
 
 export default function HQLogin() {
   const navigate = useNavigate();
@@ -33,38 +19,18 @@ export default function HQLogin() {
     setLoading(true);
 
     try {
-      // Find officer by placa
-      const { data: officer, error: fetchErr } = await hqSupabase
-        .from("officers")
-        .select("*, citizens(*)")
-        .eq("placa", placa.trim().toUpperCase())
-        .maybeSingle();
+      const { data, error: fnErr } = await supabase.functions.invoke("hq-login", {
+        body: { placa: placa.trim().toUpperCase(), password },
+      });
 
-      if (fetchErr) throw fetchErr;
-      if (!officer) {
-        setError("Placa no encontrada");
+      if (fnErr) throw fnErr;
+      if (data?.error) {
+        setError(data.error);
         setLoading(false);
         return;
       }
 
-      // Verify password (simple hash comparison - in production use bcrypt edge function)
-      if (officer.contrasena_hash !== password) {
-        setError("Credenciales incorrectas");
-        setLoading(false);
-        return;
-      }
-
-      // Store officer session in sessionStorage
-      sessionStorage.setItem("hq_officer", JSON.stringify({
-        id: officer.id,
-        placa: officer.placa,
-        rango: officer.rango,
-        departamento: officer.departamento,
-        citizen_id: officer.citizen_id,
-        nombre: officer.citizens?.nombre + " " + officer.citizens?.apellido_paterno,
-        roblox_nickname: officer.citizens?.roblox_nickname,
-      }));
-
+      sessionStorage.setItem("hq_officer", JSON.stringify(data.officer));
       navigate("/hq-dashboard");
     } catch (err: any) {
       setError(err.message || "Error al iniciar sesión");
@@ -105,7 +71,7 @@ export default function HQLogin() {
             <Input
               value={placa}
               onChange={(e) => setPlaca(e.target.value)}
-              placeholder="Ej: RCPD-001"
+              placeholder="Ej: PDI-009"
               className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 uppercase"
               required
             />
