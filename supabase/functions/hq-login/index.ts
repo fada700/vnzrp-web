@@ -5,12 +5,18 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const normalizePlate = (value: string) => value.trim().toUpperCase();
+const normalizePassword = (value: string) => value.trim();
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     const { placa, password } = await req.json();
-    if (!placa || !password) {
+    const normalizedPlaca = typeof placa === "string" ? normalizePlate(placa) : "";
+    const normalizedPassword = typeof password === "string" ? normalizePassword(password) : "";
+
+    if (!normalizedPlaca || !normalizedPassword) {
       return new Response(JSON.stringify({ error: "Placa y contraseña requeridos" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -19,18 +25,19 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { data: officer, error: fetchErr } = await supabase
+    const { data: officers, error: fetchErr } = await supabase
       .from("officers")
       .select("*, citizens(*)")
-      .eq("placa", placa.trim().toUpperCase())
-      .maybeSingle();
+      .limit(1000);
 
     if (fetchErr) throw fetchErr;
+    const officer = officers?.find((row) => normalizePlate(row.placa ?? "") === normalizedPlaca);
+
     if (!officer) {
       return new Response(JSON.stringify({ error: "Placa no encontrada" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    if (officer.contrasena_hash !== password) {
+    if (normalizePassword(officer.contrasena_hash ?? "") !== normalizedPassword) {
       return new Response(JSON.stringify({ error: "Credenciales incorrectas" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -40,12 +47,12 @@ Deno.serve(async (req) => {
       rango: officer.rango,
       departamento: officer.departamento,
       citizen_id: officer.citizen_id,
-      nombre: (officer.citizens?.nombre || "") + " " + (officer.citizens?.apellido_paterno || ""),
+      nombre: [officer.citizens?.nombre, officer.citizens?.apellido_paterno].filter(Boolean).join(" "),
       roblox_nickname: officer.citizens?.roblox_nickname,
     };
 
     return new Response(JSON.stringify({ officer: session }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Error interno" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });

@@ -40,10 +40,10 @@ const hqSupabase = createClient<Database>(
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
   {
     auth: {
-      persistSession: false,
-      autoRefreshToken: false,
+      persistSession: true,
+      autoRefreshToken: true,
       detectSessionInUrl: false,
-      storageKey: "hq-dashboard-anon",
+      storageKey: "hq-dashboard-session",
     },
   },
 );

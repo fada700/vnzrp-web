@@ -13,14 +13,23 @@ export default function HQLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const normalizedPlaca = placa.trim().toUpperCase();
+  const normalizedPassword = password.trim();
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (!normalizedPlaca || !normalizedPassword) {
+      setError("Ingresa tu placa y contraseña");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const { data, error: fnErr } = await supabase.functions.invoke("hq-login", {
-        body: { placa: placa.trim().toUpperCase(), password },
+        body: { placa: normalizedPlaca, password: normalizedPassword },
       });
 
       if (fnErr) throw fnErr;
@@ -70,7 +79,7 @@ export default function HQLogin() {
             <label className="mb-1.5 block text-sm font-medium text-slate-300">Número de Placa</label>
             <Input
               value={placa}
-              onChange={(e) => setPlaca(e.target.value)}
+              onChange={(e) => setPlaca(e.target.value.toUpperCase())}
               placeholder="Ej: PDI-009"
               className="bg-white/5 border-white/10 text-white placeholder:text-slate-500 uppercase"
               required
