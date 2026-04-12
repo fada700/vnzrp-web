@@ -133,7 +133,7 @@ function OfficerManager() {
     if (existing) { toast.error("Este ciudadano ya es oficial"); setCreating(false); return; }
     const { data: citizenData } = await supabase.from("citizens").select("user_id").eq("id", selectedCitizen.id).single();
     const { error } = await supabase.from("officers").insert({
-      citizen_id: selectedCitizen.id, placa: newPlaca, contrasena_hash: newPassword,
+      citizen_id: selectedCitizen.id, placa: newPlaca.trim().toUpperCase(), contrasena_hash: newPassword.trim(),
       rango: newRango, departamento: newDepto, salario: parseInt(newSalario),
     });
     if (error) { toast.error(error.message); setCreating(false); return; }
@@ -148,7 +148,7 @@ function OfficerManager() {
   const saveEdit = async (id: string) => {
     await supabase.from("officers").update({
       rango: editData.rango, departamento: editData.departamento,
-      salario: editData.salario, placa: editData.placa,
+      salario: editData.salario, placa: editData.placa?.trim().toUpperCase(),
     }).eq("id", id);
     toast.success("Actualizado"); setEditingId(null); fetchOfficers();
   };
@@ -211,7 +211,7 @@ function OfficerManager() {
                 </div>
               )}
             </div>
-            <div><label className="text-sm text-muted-foreground mb-1 block">Placa</label><Input placeholder="RC-001" value={newPlaca} onChange={e => setNewPlaca(e.target.value)} /></div>
+            <div><label className="text-sm text-muted-foreground mb-1 block">Placa</label><Input placeholder="RC-001" value={newPlaca} onChange={e => setNewPlaca(e.target.value.toUpperCase())} /></div>
             <div><label className="text-sm text-muted-foreground mb-1 block">Contraseña MDT</label><Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} /></div>
             <div><label className="text-sm text-muted-foreground mb-1 block">Rango</label>
               <Select value={newRango} onValueChange={setNewRango}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{RANGOS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent></Select></div>
