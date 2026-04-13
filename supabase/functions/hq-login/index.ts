@@ -7,6 +7,7 @@ const corsHeaders = {
 
 const normalizePlate = (value: string) => value.trim().toUpperCase();
 const normalizePassword = (value: string) => value.trim();
+const compactPlate = (value: string) => normalizePlate(value).replace(/\s+/g, "");
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -25,13 +26,16 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    const targetPlate = compactPlate(normalizedPlaca);
+
     const { data: officers, error: fetchErr } = await supabase
       .from("officers")
       .select("*, citizens(*)")
-      .limit(1000);
+      .ilike("placa", normalizedPlaca);
 
     if (fetchErr) throw fetchErr;
-    const officer = officers?.find((row) => normalizePlate(row.placa ?? "") === normalizedPlaca);
+
+    const officer = officers?.find((row) => compactPlate(row.placa ?? "") === targetPlate);
 
     if (!officer) {
       return new Response(JSON.stringify({ error: "Placa no encontrada" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
