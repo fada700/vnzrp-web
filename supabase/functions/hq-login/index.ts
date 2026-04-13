@@ -7,7 +7,7 @@ const corsHeaders = {
 
 const normalizePlate = (value: string) => value.trim().toUpperCase();
 const normalizePassword = (value: string) => value.trim();
-const compactPlate = (value: string) => normalizePlate(value).replace(/\s+/g, "");
+const compactPlate = (value: string) => normalizePlate(value).replace(/[^A-Z0-9]/g, "");
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
     const { data: officers, error: fetchErr } = await supabase
       .from("officers")
       .select("*, citizens(*)")
-      .ilike("placa", normalizedPlaca);
+      .limit(200);
 
     if (fetchErr) throw fetchErr;
 
