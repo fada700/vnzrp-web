@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Shield, Search, Plus, Trash2, Edit2, Save, X, Loader2, Users, UserPlus,
-  Home, Store, Building2, Package
+  Home, Store, Building2, Package, Eye, EyeOff
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -94,6 +94,7 @@ function OfficerManager() {
   const [selectedCitizen, setSelectedCitizen] = useState<CitizenOption | null>(null);
   const [newPlaca, setNewPlaca] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [newRango, setNewRango] = useState("Cadete");
   const [newDepto, setNewDepto] = useState("RCPD");
   const [newSalario, setNewSalario] = useState("2500");
@@ -212,7 +213,20 @@ function OfficerManager() {
               )}
             </div>
             <div><label className="text-sm text-muted-foreground mb-1 block">Placa</label><Input placeholder="RC-001" value={newPlaca} onChange={e => setNewPlaca(e.target.value.toUpperCase())} /></div>
-            <div><label className="text-sm text-muted-foreground mb-1 block">Contraseña MDT</label><Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} /></div>
+            <div>
+              <label className="text-sm text-muted-foreground mb-1 block">Contraseña MDT</label>
+              <div className="relative">
+                <Input type={showNewPassword ? "text" : "password"} value={newPassword} onChange={e => setNewPassword(e.target.value)} className="pr-11" />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword((current) => !current)}
+                  className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+                  aria-label={showNewPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                >
+                  {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
             <div><label className="text-sm text-muted-foreground mb-1 block">Rango</label>
               <Select value={newRango} onValueChange={setNewRango}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{RANGOS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent></Select></div>
             <div><label className="text-sm text-muted-foreground mb-1 block">Departamento</label>
