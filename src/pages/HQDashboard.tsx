@@ -68,9 +68,18 @@ export default function HQDashboard() {
   const [activeTab, setActiveTab] = useState("search");
 
   useEffect(() => {
-    const init = () => {
+    const init = async () => {
       const storedOfficer = getStoredOfficer();
       if (!storedOfficer) {
+        sessionStorage.removeItem("hq_officer");
+        navigate("/hq-login");
+        return;
+      }
+
+      // Verify we have a valid auth session
+      const { data: { session } } = await hqSupabase.auth.getSession();
+      if (!session) {
+        console.warn("No auth session found for MDT, redirecting to login");
         sessionStorage.removeItem("hq_officer");
         navigate("/hq-login");
         return;
