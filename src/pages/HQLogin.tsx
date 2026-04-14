@@ -3,8 +3,22 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Shield, Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { createClient } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
+const hqSupabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: false,
+      storageKey: "hq-dashboard-session",
+    },
+  },
+);
 
 export default function HQLogin() {
   const navigate = useNavigate();
@@ -38,6 +52,18 @@ export default function HQLogin() {
         setError(data.error);
         setLoading(false);
         return;
+      }
+
+      // Establish a real Supabase auth session for the hqSupabase client
+      if (data?.auth?.token_hash && data?.auth?.email) {
+        const { error: otpErr } = await hqSupabase.auth.verifyOtp({
+          token_hash: data.auth.token_hash,
+          type: "magiclink",
+        });
+        if (otpErr) {
+          console.error("OTP verify error:", otpErr);
+          // Non-fatal: panels may have limited functionality
+        }
       }
 
       sessionStorage.setItem("hq_officer", JSON.stringify(data.officer));
@@ -107,7 +133,6 @@ export default function HQLogin() {
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">Ahora la contraseña se muestra por defecto para que puedas verificar lo que escribes.</p>
           </div>
 
           <Button type="submit" disabled={loading} className="w-full">

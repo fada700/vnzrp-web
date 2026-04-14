@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
 
     if (fetchErr) throw fetchErr;
 
-    const officer = officers?.find((row) => compactPlate(row.placa ?? "") === targetPlate);
+    const officer = officers?.find((row: any) => compactPlate(row.placa ?? "") === targetPlate);
 
     if (!officer) {
       return new Response(JSON.stringify({ error: "Placa no encontrada" }), { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -45,7 +45,29 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Credenciales incorrectas" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const session = {
+    // Get the auth user to generate a session
+    const userId = officer.citizens?.user_id;
+    if (!userId) {
+      return new Response(JSON.stringify({ error: "Oficial sin cuenta de usuario vinculada" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    const { data: authUser, error: authErr } = await supabase.auth.admin.getUserById(userId);
+    if (authErr || !authUser?.user?.email) {
+      return new Response(JSON.stringify({ error: "No se pudo obtener cuenta de usuario" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Generate a magic link to create a valid session
+    const { data: linkData, error: linkErr } = await supabase.auth.admin.generateLink({
+      type: "magiclink",
+      email: authUser.user.email,
+    });
+
+    if (linkErr || !linkData) {
+      console.error("generateLink error:", linkErr);
+      return new Response(JSON.stringify({ error: "Error generando sesión" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    const officerSession = {
       id: officer.id,
       placa: officer.placa,
       rango: officer.rango,
@@ -55,8 +77,15 @@ Deno.serve(async (req) => {
       roblox_nickname: officer.citizens?.roblox_nickname,
     };
 
-    return new Response(JSON.stringify({ officer: session }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({
+      officer: officerSession,
+      auth: {
+        token_hash: linkData.properties?.hashed_token,
+        email: authUser.user.email,
+      },
+    }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
+    console.error("hq-login error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Error interno" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
