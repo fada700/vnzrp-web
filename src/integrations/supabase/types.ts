@@ -19,7 +19,9 @@ export type Database = {
           cargos: string
           citizen_id: string
           created_at: string
+          duracion_minutos: number
           evidencia_url: string | null
+          expira_en: string
           id: string
           officer_id: string
         }
@@ -27,7 +29,9 @@ export type Database = {
           cargos: string
           citizen_id: string
           created_at?: string
+          duracion_minutos?: number
           evidencia_url?: string | null
+          expira_en?: string
           id?: string
           officer_id: string
         }
@@ -35,7 +39,9 @@ export type Database = {
           cargos?: string
           citizen_id?: string
           created_at?: string
+          duracion_minutos?: number
           evidencia_url?: string | null
+          expira_en?: string
           id?: string
           officer_id?: string
         }
