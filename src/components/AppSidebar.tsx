@@ -11,6 +11,7 @@ import {
   Store,
   Package,
   AlertTriangle,
+  FileText,
 } from "lucide-react";
 
 const navItems = [
@@ -20,6 +21,7 @@ const navItems = [
   ]},
   { label: "IDENTIDAD", items: [
     { icon: IdCard, label: "Mi Cédula", path: "/cedula" },
+    { icon: FileText, label: "Mi Expediente", path: "/expediente" },
   ]},
   { label: "ECONOMÍA", items: [
     { icon: CreditCard, label: "Banco Venezuela", path: "/banorte" },
