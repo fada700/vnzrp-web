@@ -618,6 +618,15 @@ function ArrestPanel({ officer }: { officer: Officer }) {
     if (error) { toast.error(error.message); }
     else {
       const durLabel = DURATION_OPTIONS.find(d => d.value === duracion)?.label || `${duracion} min`;
+      const now2 = new Date();
+      const expira2 = new Date(now2.getTime() + duracion * 60000);
+      // Notify citizen
+      await hqSupabase.from("notifications").insert({
+        citizen_id: selectedCitizen.id,
+        titulo: "Has sido arrestado",
+        mensaje: `Cargos: ${cargos}. Duración: ${durLabel}. Ingreso: ${now2.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })} — Expiración: ${expira2.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" })}`,
+        tipo: "arresto",
+      });
       toast.success(`Arresto registrado — ${durLabel}`);
       setSelectedCitizen(null);
       setCargos("");
